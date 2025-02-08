@@ -1,60 +1,40 @@
-name: iOS-ipa-build
+name: iOS Build (No Code Signing)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  build-ios:
-    name: 🎉 iOS Build
+  build_ios:
     runs-on: macos-latest
-
-    permissions:
-      contents: write  # Grants required permissions for uploading assets
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          architecture: x64
+          flutter-version: 'stable'
 
-      - name: Clean project
-        run: flutter clean
-
-      - name: Get dependencies
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Update CocoaPods repo
-        run: pod repo update
-        working-directory: ios
+      - name: Build iOS (No Code Signing)
+        run: flutter build ios --no-codesign
 
-      - name: Install CocoaPods dependencies
-        run: pod install --verbose
-        working-directory: ios
+      - name: Archive Xcode Project Without Signing
+        run: |
+          cd ios
+          xcodebuild build \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Build iOS app (without codesign)
-        run: flutter build ios --release --no-codesign
-
-      - name: Create Payload directory
-        run: mkdir -p Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Move app to Payload directory
-        run: mv Runner.app Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Create IPA file
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Upload IPA to GitHub Releases
-        uses: svenstaro/upload-release-action@v2
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
-          tag: ${{ github.ref_name }}  # Uses branch/tag name dynamically
-          overwrite: true
-          body: "Automated iOS build release 🚀"
+          name: ios-build
+          path: build/ios/iphoneos
