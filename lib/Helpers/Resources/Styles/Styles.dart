@@ -11,6 +11,8 @@ class Styles {
 
   static Color lightGrayishBlue = const Color(0xffE3F0F3);
 
+  static Color rideItemBackground = const Color.fromRGBO(242, 242, 242, 1);
+
   static Color neutralGrey = const Color(0xffEDF1F3);
 
   static Color primaryGrey = const Color(0xffF0F0F0);
@@ -19,12 +21,18 @@ class Styles {
 
   static Color disabledButton = const Color(0xff9F9F9F);
 
+  static Color greemTextColor = const Color(0xff13A944);
+
+  static Color grayText = const Color.fromRGBO(54, 54, 54, 1);
+
+  static Color lightGrayText = Color.fromRGBO(185, 185, 185, 1);
+
   static LinearGradient greenGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
         const Color(0xffFFFFFF).withOpacity(0.47),
-        const Color(0xffCAFF95)
+        const Color(0xff574CFA)
       ]);
 
   //
@@ -88,7 +96,7 @@ class Styles {
 
   static Color progressBlue = const Color(0xff8FC3FC);
 
-  static Color buttonPrimary = const Color(0xffCAFF95);
+  static Color buttonPrimary = const Color(0xff574CFA);
 
   static Color categoryBackgroundPrimary = const Color(0xfff5f5f5);
 
@@ -134,7 +142,7 @@ class Styles {
 
   static Color backgroundShadowColor = const Color(0xff555e68);
 
-  static Color textPrimary = Color(0xff13a944);
+  static Color textPrimary = Color(0xff574CFA);
 
   static Color shadowPrimary = Colors.black.withOpacity(.11);
 
@@ -144,7 +152,7 @@ class Styles {
 
   static Color textSecondary = const Color(0xff727272);
 
-  static Color textTertiary = const Color(0xff353535);
+  static Color textTertiary = const Color(0xff000000);
 
   static Color textQuaternary = const Color(0xffAFAFAF);
 
@@ -200,9 +208,17 @@ class Styles {
   static Color tabButtonPrimary = const Color(0xffD0F8A8);
 
   static Color tabBorderPrimary = const Color(0xffE6E6E6);
-
+  static Color textColor = const Color.fromRGBO(30, 30, 30, 1);
+  static Color yellowTabBarColor = const Color.fromRGBO(255, 251, 0, 1);
+  static Color lightGrayTextSecondary = const Color.fromRGBO(134, 132, 144, 1);
+  static Color selectedVehicleColor = const Color.fromRGBO(87, 76, 250, 0.1);
+  static Color greenButtonColor = const Color.fromRGBO(19, 169, 68, 1);
+  static Color lightWhiteContainer = const Color.fromRGBO(255, 255, 255, 0.36);
+  static Color blueBorderColor = const Color.fromRGBO(73, 69, 255, 1);
+  static Color carouselRed = const Color(0xffE7523C);
+  static Color blueContainer = const Color.fromRGBO(87, 76, 250, 1);
   // Create a static variable primaryColor of type Color
-  static Color primaryColor = const Color(0xff13A944);
+  static Color primaryColor = const Color(0xff574CFA);
 
   // Create a static variable primaryDark of type Color
   static Color primaryDark = const Color(0xff7BB05E);

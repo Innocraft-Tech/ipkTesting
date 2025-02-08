@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pinput/pinput.dart';
+import 'package:telephony/telephony.dart';
 import 'package:zappy/Helpers/AppConstants/AppConstants.dart';
+import 'package:zappy/Helpers/AppNavigations/NavigationHelpers.dart';
+import 'package:zappy/Helpers/AppNavigations/NavigationMixin.dart';
+import 'package:zappy/Helpers/Mixins/PopUpMixin.dart';
 import 'package:zappy/Helpers/Resources/Styles/Styles.dart';
 import 'package:zappy/Helpers/ResponsiveUI.dart';
-import 'dart:async'; // For the Timer class
+import 'package:zappy/Helpers/Utilities/Utilities.dart';
+import 'package:zappy/Pages/OTPScreen/OTPScreenVM.dart';
+import 'package:zappy/Reusables/Popup/Popup.dart';
+import 'dart:async';
 
 class OTPScreen extends StatefulWidget {
-  late String mobileNumber;
+  late List mobileNumber;
   OTPScreen({super.key, required this.mobileNumber});
 
   @override
@@ -17,15 +25,93 @@ class _OTPScreenState extends State<OTPScreen> {
   final List<TextEditingController> _otpControllers =
       List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  late final OTPScreenVM _otpScreenVM;
   int _timerValue = 0;
   Timer? _timer;
   String mobileNum = "";
+  String? _retrievedSmsCode;
+  String? _appSignature;
+  bool _isListening = false;
+
+  void readOTP() {
+    try {
+      Telephony _telephony = Telephony.instance;
+      print("Listening to sms.");
+      _telephony.listenIncomingSms(
+          onNewMessage: (SmsMessage message) {
+            print("sms received : ${message.body}");
+
+            if (message.body!.contains("OTPLESS: Your OTP is")) {
+              // Extract OTP using a regular expression
+              final RegExp otpRegExp =
+                  RegExp(r'\b\d{4,6}\b'); // Matches 4 to 6 digit numbers
+              final match = otpRegExp.firstMatch(message.body ?? '');
+              if (match != null) {
+                final otp = match.group(0); // Extract the OTP
+                print("Extracted OTP: $otp");
+
+                // Assuming _otpControllers[0].setText is part of your logic
+                _otpControllers[0].setText(otp!); // Use the extracted OTP
+              } else {
+                print("No OTP found in the message.");
+              }
+            }
+          },
+          listenInBackground: false);
+    } catch (error) {
+      error.logExceptionData();
+    }
+  }
+
+  backgrounMessageHandler(SmsMessage message) async {
+    //Handle background message
+  }
+
+  void listenToIncomingSMS() {
+    print("Listening to sms.");
+    Telephony.instance.listenIncomingSms(
+        onNewMessage: (SmsMessage message) {
+          // Handle message
+          print("sms received : ${message.body}");
+          // verify if we are reading the correct sms or not
+
+          if (message.body!.contains("zappy-a2e25")) {
+            String otpCode = message.body!.substring(0, 6);
+            setState(() {
+              _otpControllers[0].text = otpCode;
+              // wait for 1 sec and then press handle submit
+            });
+          }
+        },
+        listenInBackground: false);
+  }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    mobileNum = widget.mobileNumber;
+    _otpScreenVM = OTPScreenVM();
+    readOTP();
+    mobileNum = widget.mobileNumber[0];
+    _otpScreenVM.navigationStream.stream.listen((event) {
+      if (event is NavigatorPushReplace) {
+        context.popAndPush(pageConfig: event.pageConfig, data: event.data);
+      } else if (event is NavigatorPopAndPush) {
+        context.popAndPush(pageConfig: event.pageConfig, data: event.data);
+      } else if (event is NavigatorPop) {
+        context.pop();
+      } else if (event is NavigatorPopAndRemoveUntil) {
+        context.pushAndRemoveUntil(
+            pageConfig: event.pageConfig,
+            removeUntilpageConfig: event.removeUntilpageConfig,
+            data: event.data);
+      }
+    });
+    _otpScreenVM.popUpController.stream.listen((event) {
+      if (event is ShowPopupWithSingleAction) {
+        showPopupWithSingleAction(context, event);
+      }
+    });
   }
 
   @override
@@ -75,7 +161,7 @@ class _OTPScreenState extends State<OTPScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Styles.secondaryColor,
+      backgroundColor: Styles.backgroundWhite,
       body: Center(
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -88,7 +174,7 @@ class _OTPScreenState extends State<OTPScreen> {
             children: [
               SizedBox(height: ResponsiveUI.h(50, context)),
               SvgPicture.asset(
-                AppConstants.appLogo,
+                AppConstants.appIconDark,
                 width: ResponsiveUI.w(139, context),
                 height: ResponsiveUI.h(59, context),
               ),
@@ -99,7 +185,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   fontFamily: "MontserratMedium",
                   fontSize: ResponsiveUI.sp(16, context),
                   fontWeight: FontWeight.w500,
-                  color: Styles.backgroundPrimary,
+                  color: Styles.blackPrimary,
                   height: 1.3,
                 ),
                 textAlign: TextAlign.center,
@@ -116,53 +202,78 @@ class _OTPScreenState extends State<OTPScreen> {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: ResponsiveUI.h(20, context)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  4,
-                  (index) => SizedBox(
-                    width: ResponsiveUI.w(60, context),
-                    child: TextFormField(
-                      style: TextStyle(
-                        color: Styles.backgroundPrimary,
+              Pinput(
+                  length: 4,
+                  controller: _otpControllers[0],
+                  focusNode: _focusNodes[0],
+                  onCompleted: (pin) {
+                    Future.delayed(Duration(seconds: 1), () {
+                      _otpScreenVM.verifyOTP(widget.mobileNumber[0], pin);
+                    });
+                  },
+                  onChanged: (value) {
+                    _onOtpFieldChanged(value, 0);
+                  },
+                  onTapOutside: (event) => _focusNodes[0].unfocus(),
+                  defaultPinTheme: PinTheme(
+                      width: ResponsiveUI.w(44, context),
+                      height: ResponsiveUI.h(53, context),
+                      textStyle: TextStyle(
+                        color: Styles.blackPrimary,
                         fontFamily: "MontserratRegular",
-                        fontSize: ResponsiveUI.sp(14, context),
-                        fontWeight: FontWeight.w400,
-                        height: 17 / 14,
+                        fontSize: ResponsiveUI.sp(16, context),
                       ),
-                      controller: _otpControllers[index],
-                      focusNode: _focusNodes[index],
-                      onTapOutside: (event) => _focusNodes[index].unfocus(),
-                      textAlign: TextAlign.center,
-                      maxLength: 1,
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => _onOtpFieldChanged(value, index),
-                      decoration: InputDecoration(
-                        counterText: "", // Hides the character count
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: ResponsiveUI.h(15, context),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Styles.backgroundPrimary,
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Styles.backgroundPrimary,
-                            width: 1,
-                          ),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Styles.secondaryColor),
                           borderRadius: BorderRadius.circular(
-                            ResponsiveUI.r(10, context),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+                              ResponsiveUI.r(10, context))))),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              //   children: List.generate(
+              //     6,
+              //     (index) => SizedBox(
+              //       width: ResponsiveUI.w(60, context),
+              //       child: TextFormField(
+              //         style: TextStyle(
+              //           color: Styles.backgroundPrimary,
+              //           fontFamily: "MontserratRegular",
+              //           fontSize: ResponsiveUI.sp(14, context),
+              //           fontWeight: FontWeight.w400,
+              //           height: 17 / 14,
+              //         ),
+              //         controller: _otpControllers[index],
+              //         focusNode: _focusNodes[index],
+              //         onTapOutside: (event) => _focusNodes[index].unfocus(),
+              //         textAlign: TextAlign.center,
+              //         maxLength: 1,
+              //         keyboardType: TextInputType.number,
+              //         onChanged: (value) => _onOtpFieldChanged(value, index),
+              //         decoration: InputDecoration(
+              //           counterText: "", // Hides the character count
+              //           contentPadding: EdgeInsets.symmetric(
+              //             vertical: ResponsiveUI.h(15, context),
+              //           ),
+              //           enabledBorder: OutlineInputBorder(
+              //             borderSide: BorderSide(
+              //               color: Styles.backgroundPrimary,
+              //               width: 1,
+              //             ),
+              //             borderRadius: BorderRadius.circular(8),
+              //           ),
+              //           focusedBorder: OutlineInputBorder(
+              //             borderSide: BorderSide(
+              //               color: Styles.backgroundPrimary,
+              //               width: 1,
+              //             ),
+              //             borderRadius: BorderRadius.circular(
+              //               ResponsiveUI.r(10, context),
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
               SizedBox(height: ResponsiveUI.h(30, context)),
               SizedBox(
                 width: ResponsiveUI.w(370, context),
@@ -174,6 +285,7 @@ class _OTPScreenState extends State<OTPScreen> {
                         .map((controller) => controller.text)
                         .join();
                     print("Entered OTP: $otp");
+                    _otpScreenVM.verifyOTP(widget.mobileNumber[0], otp);
                   },
                   style: ButtonStyle(
                     shape: MaterialStatePropertyAll(
@@ -205,6 +317,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   print("object");
                   if (_timerValue == 0) {
                     _startTimer(); // Start timer if it's 0
+                    _otpScreenVM.resendOTP(widget.mobileNumber[0]);
                   }
                 },
                 child: Text(

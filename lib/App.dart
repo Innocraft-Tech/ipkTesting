@@ -18,7 +18,7 @@ class _AppState extends State<App> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       onGenerateRoute:
-          AppRoute(initialPage: Pages.homeScreenConfig, initialPageData: "")
+          AppRoute(initialPage: Pages.splashScreenConfig, initialPageData: [])
               .onGenerateRoute,
     );
   }

@@ -22,12 +22,14 @@ class _SplashScreenState extends State<SplashScreen> {
     // TODO: implement initState
     super.initState();
     _splashScreenVM = SplashScreenVM();
-    Future.delayed(Duration(seconds: 2), () {
-      _splashScreenVM.navigateToLoginScreen();
-    });
+    // Future.delayed(Duration(seconds: 2), () {
+    //   _splashScreenVM.navigateToLoginScreen();
+    // });
     _splashScreenVM.navigationStream.stream.listen((event) {
       if (event is NavigatorPushReplace) {
         context.pushReplace(pageConfig: event.pageConfig, data: event.data);
+      } else if (event is NavigatorPopAndPush) {
+        context.popAndPush(pageConfig: event.pageConfig, data: event.data);
       }
     });
   }
@@ -36,11 +38,14 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Styles.primaryColor,
-      body: Center(
-        child: SvgPicture.asset(
-          AppConstants.appLogo,
-          width: ResponsiveUI.w(211, context),
-          height: ResponsiveUI.h(89, context),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: ResponsiveUI.w(40, context)),
+        child: Center(
+          child: SvgPicture.asset(
+            AppConstants.appLogo,
+            width: ResponsiveUI.w(211, context),
+            height: ResponsiveUI.h(89, context),
+          ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:zappy/Helpers/AppConstants/AppConstants.dart';
+import 'package:zappy/Helpers/Resources/Styles/Styles.dart';
 import 'package:zappy/Helpers/ResponsiveUI.dart';
 import 'package:zappy/Pages/LocationSearchScreen/AppColors.dart';
 
@@ -23,14 +24,17 @@ class LocationResultTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: EdgeInsets.only(
+            bottom: ResponsiveUI.h(21, context),
+            left: ResponsiveUI.w(16, context),
+            right: ResponsiveUI.w(16, context)),
         child: Row(
           children: [
             SvgPicture.asset(
               AppConstants.locationIcon,
+              color: Styles.textColor,
               width: ResponsiveUI.w(24, context),
               height: ResponsiveUI.h(24, context),
-              color: index == 0 ? AppColors.primary : AppColors.textSecondary,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -39,18 +43,20 @@ class LocationResultTile extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
+                    style: TextStyle(
+                      color: Styles.textColor,
+                      fontFamily: "MontserratSemiBold",
+                      fontSize: ResponsiveUI.sp(14, context),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: ResponsiveUI.h(6, context)),
                   Text(
                     address,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 14,
+                      fontFamily: "MontserratRegular",
+                      fontSize: ResponsiveUI.sp(14, context),
                     ),
                   ),
                 ],
@@ -60,7 +66,7 @@ class LocationResultTile extends StatelessWidget {
               AppConstants.locationIndicator,
               width: ResponsiveUI.w(24, context),
               height: ResponsiveUI.h(24, context),
-              color: index == 0 ? AppColors.primary : AppColors.textSecondary,
+              color: Styles.textColor,
             ),
           ],
         ),
