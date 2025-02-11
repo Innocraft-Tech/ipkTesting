@@ -28,6 +28,17 @@ jobs:
         run: |
           flutter --version
           xcodebuild -version
+          sudo ls /Applications | grep Xcode  # List available Xcode versions
+
+      - name: Use Latest Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+
+      - name: Downgrade Xcode Project Format (if needed)
+        run: |
+          if [ -f ios/Runner.xcodeproj/project.pbxproj ]; then
+            sed -i '' 's/objectVersion = 77;/objectVersion = 56;/g' ios/Runner.xcodeproj/project.pbxproj
+            cat ios/Runner.xcodeproj/project.pbxproj | grep objectVersion
+          fi
 
       - name: Clean project
         run: flutter clean
