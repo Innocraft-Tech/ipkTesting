@@ -21,6 +21,14 @@ jobs:
           channel: 'stable'
           architecture: x64
 
+      - name: Upgrade Flutter
+        run: flutter upgrade
+
+      - name: Print Flutter & Xcode Versions
+        run: |
+          flutter --version
+          xcodebuild -version
+
       - name: Clean project
         run: flutter clean
 
@@ -29,7 +37,11 @@ jobs:
 
       - name: Ensure iOS Deployment Target is 13.0
         run: |
-          sed -i '' 's/platform :ios, .*/platform :ios, "13.0"/' ios/Podfile
+          if ! grep -q 'platform :ios' ios/Podfile; then
+            echo 'platform :ios, "13.0"' >> ios/Podfile
+          else
+            sed -i '' 's/platform :ios, .*/platform :ios, "13.0"/' ios/Podfile
+          fi
           cat ios/Podfile  # Print to verify change
 
       - name: Remove existing Pods and Lockfile
@@ -49,17 +61,16 @@ jobs:
       - name: Build iOS app (without codesign)
         run: flutter build ios --release --no-codesign
 
-      - name: Create Payload directory
-        run: mkdir -p Payload
-        working-directory: build/ios/iphoneos
+      - name: Create Payload directory for IPA
+        run: mkdir -p build/ios/iphoneos/Payload
 
       - name: Move app to Payload directory
-        run: mv Runner.app Payload
-        working-directory: build/ios/iphoneos
+        run: mv build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
 
       - name: Create IPA file
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphoneos
+        run: |
+          cd build/ios/iphoneos
+          zip -qq -r -9 FlutterIpaExport.ipa Payload
 
       - name: Upload IPA to GitHub Releases
         uses: svenstaro/upload-release-action@v2
