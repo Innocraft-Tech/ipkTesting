@@ -35,12 +35,12 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Ensure iOS Deployment Target is 13.0
+      - name: Ensure iOS Deployment Target is 14.0
         run: |
           if ! grep -q 'platform :ios' ios/Podfile; then
-            echo 'platform :ios, "13.0"' >> ios/Podfile
+            echo 'platform :ios, "14.0"' >> ios/Podfile
           else
-            sed -i '' 's/platform :ios, .*/platform :ios, "13.0"/' ios/Podfile
+            sed -i '' 's/platform :ios, .*/platform :ios, "14.0"/' ios/Podfile
           fi
           cat ios/Podfile  # Print to verify change
 
